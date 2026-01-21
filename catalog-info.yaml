@@ -1,0 +1,174 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: jwt-auth-service
+  title: JWT Authentication Service
+  description: |
+    A lightweight JWT-based authentication service built with Java, Spring Boot, and Gradle.
+    Designed for local development and testing with file-based user storage.
+  tags:
+    - java
+    - spring-boot
+    - jwt
+    - authentication
+    - rest
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: platform-team
+  definition: |
+    openapi: 3.0.3
+    info:
+      title: JWT Authentication Service API
+      description: REST API for JWT-based authentication
+      version: 1.0.0
+    servers:
+      - url: http://localhost:8080
+        description: Local development server
+    paths:
+      /api/auth/login:
+        post:
+          summary: Authenticate user and get JWT token
+          operationId: login
+          tags:
+            - Authentication
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginRequest'
+          responses:
+            '200':
+              description: Successful authentication
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/LoginResponse'
+            '401':
+              description: Invalid credentials
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ErrorResponse'
+      /api/auth/validate:
+        post:
+          summary: Validate JWT token
+          operationId: validateToken
+          tags:
+            - Authentication
+          security:
+            - bearerAuth: []
+          responses:
+            '200':
+              description: Token is valid
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/TokenValidationResponse'
+            '401':
+              description: Invalid or expired token
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/TokenValidationResponse'
+      /api/auth/refresh:
+        post:
+          summary: Refresh JWT token
+          operationId: refreshToken
+          tags:
+            - Authentication
+          security:
+            - bearerAuth: []
+          responses:
+            '200':
+              description: New token issued
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/LoginResponse'
+            '401':
+              description: Invalid token
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ErrorResponse'
+      /api/auth/health:
+        get:
+          summary: Health check endpoint
+          operationId: healthCheck
+          tags:
+            - Health
+          responses:
+            '200':
+              description: Service is healthy
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/HealthResponse'
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+      schemas:
+        LoginRequest:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+        LoginResponse:
+          type: object
+          properties:
+            token:
+              type: string
+            tokenType:
+              type: string
+              example: Bearer
+            expiresIn:
+              type: integer
+              example: 3600
+        TokenValidationResponse:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            username:
+              type: string
+            issuedAt:
+              type: string
+              format: date-time
+            expiresAt:
+              type: string
+              format: date-time
+            error:
+              type: string
+            message:
+              type: string
+        ErrorResponse:
+          type: object
+          properties:
+            error:
+              type: string
+            message:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+        HealthResponse:
+          type: object
+          properties:
+            status:
+              type: string
+              example: UP
+            timestamp:
+              type: string
+              format: date-time
